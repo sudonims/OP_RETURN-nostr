@@ -1,0 +1,59 @@
+package nostrhelper
+
+import (
+	"context"
+	"fmt"
+	"os"
+	"strings"
+	"time"
+
+	"github.com/nbd-wtf/go-nostr"
+	"github.com/nbd-wtf/go-nostr/nip19"
+)
+
+func PostNote(msg string) bool {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	relay, err := nostr.RelayConnect(ctx, "nostr-pub.wellorder.net")
+
+	if err != nil {
+		panic(err)
+	}
+
+	var nsec string
+	nsec = "<>"
+
+	var sk string
+	ev := nostr.Event{}
+	if _, s, e := nip19.Decode(nsec); e == nil {
+		sk = s.(string)
+	} else {
+		sk = nostr.GeneratePrivateKey()
+	}
+
+	if pub, e := nostr.GetPublicKey(sk); e == nil {
+		ev.PubKey = pub
+		if npub, e := nip19.EncodePublicKey(pub); e == nil {
+			fmt.Fprintln(os.Stderr, "using:", npub)
+		}
+	} else {
+		panic(e)
+	}
+
+	ev.CreatedAt = time.Now()
+	ev.Kind = 1
+	var content string
+	content = "content"
+	ev.Content = strings.TrimSpace(content)
+	ev.Sign(sk)
+
+	status := relay.Publish(ctx, ev)
+
+	cancel()
+	if status == nostr.PublishStatusSucceeded {
+		return true
+	} else {
+		return false
+	}
+
+}
