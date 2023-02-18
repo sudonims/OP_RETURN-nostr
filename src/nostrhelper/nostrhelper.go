@@ -20,8 +20,7 @@ func PostNote(trxHash string, msg string) bool {
 		panic(err)
 	}
 
-	var nsec string
-	nsec = "<>"
+	nsec := "<>"
 
 	var sk string
 	ev := nostr.Event{}
