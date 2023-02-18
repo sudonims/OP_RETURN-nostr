@@ -30,9 +30,9 @@ class ZMQHandler():
 						sequence = str(struct.unpack('<I', seq)[-1])
 				if topic == b"hashblock":
 						print('- HASH BLOCK ('+sequence+') -')
-						print(body.hex())
+						# print(body.hex())
 						run(body.hex())
-						
+
 				asyncio.ensure_future(self.handle())
 
 		def start(self):
