@@ -1,37 +1,64 @@
+import asyncio
+import zmq
+import zmq.asyncio
+import signal
+import struct
+import sys
 
-import json
-from pprint import pprint
-import subprocess
+if (sys.version_info.major, sys.version_info.minor) < (3, 5):
+    print("This example only works with Python 3.5 and greater")
+    sys.exit(1)
 
-def shell_execute(cmd):
-	out, err = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
-	if err:
-		print(err)
-	return out
+port = 28332
 
-def get_block(hash):
-	block = json.loads(shell_execute("bitcoin-cli getblock {}".format(hash)))
-	return block
+class ZMQHandler():
+    def __init__(self):
+        self.loop = asyncio.get_event_loop()
+        self.zmqContext = zmq.asyncio.Context()
 
-def get_raw_trx(trx_hash, blk_hash):
-	trx = json.loads(shell_execute("bitcoin-cli getrawtransaction {} true {}".format(trx_hash, blk_hash)))
-	return trx
+        self.zmqSubSocket = self.zmqContext.socket(zmq.SUB)
+        self.zmqSubSocket.setsockopt(zmq.RCVHWM, 0)
+        self.zmqSubSocket.setsockopt_string(zmq.SUBSCRIBE, "hashblock")
+        self.zmqSubSocket.setsockopt_string(zmq.SUBSCRIBE, "hashtx")
+        self.zmqSubSocket.setsockopt_string(zmq.SUBSCRIBE, "rawblock")
+        self.zmqSubSocket.setsockopt_string(zmq.SUBSCRIBE, "rawtx")
+        self.zmqSubSocket.setsockopt_string(zmq.SUBSCRIBE, "sequence")
+        self.zmqSubSocket.connect("tcp://127.0.0.1:%i" % port)
 
-def run(block_hash):
-	block = get_block(block_hash)
-	trxs = block.get('tx')[1:]
-	print(len(trxs))
-	for trx in trxs:
-		raw_vout = get_raw_trx(trx, block_hash).get('vout')
-		for vout in raw_vout:
-			asm = vout.get('scriptPubKey').get('asm')
-			if 'OP_RETURN' in asm:
-				print(bytes.fromhex(asm.replace("OP_RETURN ", "")).decode("latin-1"))
-	
+    async def handle(self) :
+        topic, body, seq = await self.zmqSubSocket.recv_multipart()
+        sequence = "Unknown"
+        if len(seq) == 4:
+            sequence = str(struct.unpack('<I', seq)[-1])
+        if topic == b"hashblock":
+            print('- HASH BLOCK ('+sequence+') -')
+            print(body.hex())
+        # elif topic == b"hashtx":
+        #     print('- HASH TX  ('+sequence+') -')
+        #     print(body.hex())
+        elif topic == b"rawblock":
+            print('- RAW BLOCK HEADER ('+sequence+') -')
+            print(body[:80].hex())
+        # elif topic == b"rawtx":
+        #     print('- RAW TX ('+sequence+') -')
+        #     print(body.hex())
+        # elif topic == b"sequence":
+        #     hash = body[:32].hex()
+        #     label = chr(body[32])
+        #     mempool_sequence = None if len(body) != 32+1+8 else struct.unpack("<Q", body[32+1:])[0]
+        #     print('- SEQUENCE ('+sequence+') -')
+        #     print(hash, label, mempool_sequence)
+        # schedule ourselves to receive the next message
+        asyncio.ensure_future(self.handle())
 
-# print(get_block("00000000000000000000faa17eccc2d5cc77dde99e8295955d2f416a9de6125d").get("tx")[0])
-# pprint(get_raw_trx("88e8344716a5642276bb648e8459353dbddfc6c06f8dbda066120718e15918d1", "00000000000000000000faa17eccc2d5cc77dde99e8295955d2f416a9de6125d"))
+    def start(self):
+        self.loop.add_signal_handler(signal.SIGINT, self.stop)
+        self.loop.create_task(self.handle())
+        self.loop.run_forever()
 
+    def stop(self):
+        self.loop.stop()
+        self.zmqContext.destroy()
 
-
-run("00000000000000000000faa17eccc2d5cc77dde99e8295955d2f416a9de6125d")
+daemon = ZMQHandler()
+daemon.start()

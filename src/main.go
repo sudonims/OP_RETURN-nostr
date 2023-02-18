@@ -1,9 +1,17 @@
 package main
 
-import "nostr_opreturn/src/nostrhelper"
+import (
+	"fmt"
+	"os"
+)
 
 func main() {
 
-	nostrhelper.PostNote("lol")
+	trxHash := os.Args[1]
+	msg := os.Args[2]
+
+	fmt.Println(trxHash, msg)
+
+	// nostrhelper.PostNote(trxsHash, msg)
 
 }

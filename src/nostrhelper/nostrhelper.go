@@ -11,7 +11,7 @@ import (
 	"github.com/nbd-wtf/go-nostr/nip19"
 )
 
-func PostNote(msg string) bool {
+func PostNote(trxHash string, msg string) bool {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	relay, err := nostr.RelayConnect(ctx, "nostr-pub.wellorder.net")
@@ -42,8 +42,16 @@ func PostNote(msg string) bool {
 
 	ev.CreatedAt = time.Now()
 	ev.Kind = 1
-	var content string
-	content = "content"
+	content := fmt.Sprintf(
+		`       New OP_RETURN
+		
+		        %s
+
+
+		https://mempool.space/tx/%s
+		
+		`, msg, trxHash)
+
 	ev.Content = strings.TrimSpace(content)
 	ev.Sign(sk)
 
