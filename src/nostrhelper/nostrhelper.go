@@ -21,13 +21,11 @@ func PostNote(trxHash string, msg string) bool {
 	}
 
 	nsec := "<>"
+	ev := nostr.Event{}
 
 	var sk string
-	ev := nostr.Event{}
 	if _, s, e := nip19.Decode(nsec); e == nil {
 		sk = s.(string)
-	} else {
-		sk = nostr.GeneratePrivateKey()
 	}
 
 	if pub, e := nostr.GetPublicKey(sk); e == nil {
@@ -42,10 +40,9 @@ func PostNote(trxHash string, msg string) bool {
 	ev.CreatedAt = time.Now()
 	ev.Kind = 1
 	content := fmt.Sprintf(
-		`       New OP_RETURN
+		`   New OP_RETURN
 		
 		        %s
-
 
 		https://mempool.space/tx/%s
 		
@@ -62,5 +59,4 @@ func PostNote(trxHash string, msg string) bool {
 	} else {
 		return false
 	}
-
 }

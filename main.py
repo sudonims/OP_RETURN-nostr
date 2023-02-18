@@ -21,10 +21,6 @@ class ZMQHandler():
 				self.zmqSubSocket = self.zmqContext.socket(zmq.SUB)
 				self.zmqSubSocket.setsockopt(zmq.RCVHWM, 0)
 				self.zmqSubSocket.setsockopt_string(zmq.SUBSCRIBE, "hashblock")
-				self.zmqSubSocket.setsockopt_string(zmq.SUBSCRIBE, "hashtx")
-				self.zmqSubSocket.setsockopt_string(zmq.SUBSCRIBE, "rawblock")
-				self.zmqSubSocket.setsockopt_string(zmq.SUBSCRIBE, "rawtx")
-				self.zmqSubSocket.setsockopt_string(zmq.SUBSCRIBE, "sequence")
 				self.zmqSubSocket.connect("tcp://127.0.0.1:%i" % port)
 
 		async def handle(self) :
@@ -36,22 +32,7 @@ class ZMQHandler():
 						print('- HASH BLOCK ('+sequence+') -')
 						print(body.hex())
 						run(body.hex())
-				# elif topic == b"hashtx":
-				#				 print('- HASH TX		('+sequence+') -')
-				#				 print(body.hex())
-				elif topic == b"rawblock":
-						print('- RAW BLOCK HEADER ('+sequence+') -')
-						print(body[:80].hex())
-				# elif topic == b"rawtx":
-				#				 print('- RAW TX ('+sequence+') -')
-				#				 print(body.hex())
-				# elif topic == b"sequence":
-				#				 hash = body[:32].hex()
-				#				 label = chr(body[32])
-				#				 mempool_sequence = None if len(body) != 32+1+8 else struct.unpack("<Q", body[32+1:])[0]
-				#				 print('- SEQUENCE ('+sequence+') -')
-				#				 print(hash, label, mempool_sequence)
-				# schedule ourselves to receive the next message
+						
 				asyncio.ensure_future(self.handle())
 
 		def start(self):

@@ -1,6 +1,4 @@
-import asyncio
 import json
-from pprint import pprint
 import subprocess
 
 
@@ -21,7 +19,7 @@ def get_raw_trx(trx_hash, blk_hash):
 def run(block_hash):
 	block = get_block(block_hash)
 	trxs = block.get('tx')[1:]
-	print(len(trxs))
+	print(len(trxs), block_hash)
 	for trx in trxs:
 		raw_vout = get_raw_trx(trx, block_hash).get('vout')
 		for vout in raw_vout:
@@ -29,7 +27,7 @@ def run(block_hash):
 			if 'OP_RETURN' in asm:
 				try:
 					msg = bytes.fromhex(asm.replace("OP_RETURN ", "")).decode("utf-8")
-					a = shell_execute("./main {} {}".format(trx, msg))
+					a = shell_execute("./main {} \"{}\"".format(trx, msg))
 					print(a)
 				except Exception as e:
 					# print(e)
@@ -41,4 +39,4 @@ def run(block_hash):
 
 
 
-# run("00000000000000000000faa17eccc2d5cc77dde99e8295955d2f416a9de6125d")
+# run("0000000000000000000703bb3c2a01b9ec6c7e2197d7460a8a1021cb92b459a5")
