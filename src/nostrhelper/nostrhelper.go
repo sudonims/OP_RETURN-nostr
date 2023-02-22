@@ -12,13 +12,8 @@ import (
 )
 
 func PostNote(trxHash string, msg string) bool {
-	ctx, cancel := context.WithCancel(context.Background())
 
-	relay, err := nostr.RelayConnect(ctx, "nostr-pub.wellorder.net")
-
-	if err != nil {
-		panic(err)
-	}
+	relayList := []string{"wss://nostr.zebedee.cloud", "wss://nostr-pub.wellorder.net", "wss://relay.damus.io"}
 
 	nsec := "<>"
 	ev := nostr.Event{}
@@ -39,24 +34,29 @@ func PostNote(trxHash string, msg string) bool {
 
 	ev.CreatedAt = time.Now()
 	ev.Kind = 1
-	content := fmt.Sprintf(
-		`   New OP_RETURN
-		
-		        %s
-
-		https://mempool.space/tx/%s
-		
-		`, msg, trxHash)
+	content := fmt.Sprintf("      New OP_RETURN      \n%s\nhttps://mempool.space/tx/%s", msg, trxHash)
 
 	ev.Content = strings.TrimSpace(content)
 	ev.Sign(sk)
 
-	status := relay.Publish(ctx, ev)
+	for _, url := range relayList {
+		ctx, cancel := context.WithCancel(context.Background())
 
-	cancel()
-	if status == nostr.PublishStatusSucceeded {
-		return true
-	} else {
-		return false
+		relay, err := nostr.RelayConnect(ctx, url)
+
+		if err != nil {
+			panic(err)
+		}
+
+		relay.Publish(ctx, ev)
+
+		cancel()
 	}
+
+	// if status == nostr.PublishStatusSucceeded {
+	// 	return true
+	// } else {
+	// 	return false
+	// }
+	return true
 }
