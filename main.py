@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import asyncio
 import zmq
 import zmq.asyncio
@@ -33,7 +31,7 @@ class ZMQHandler():
 				if topic == b"hashblock":
 						print('- HASH BLOCK ('+sequence+') -')
 						# print(body.hex())
-						run(body.hex(), sys.argv[1])
+						run(body.hex(), sys.argv[1], sys.argv[2])
 
 				asyncio.ensure_future(self.handle())
 

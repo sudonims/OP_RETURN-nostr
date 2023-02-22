@@ -11,11 +11,10 @@ import (
 	"github.com/nbd-wtf/go-nostr/nip19"
 )
 
-func PostNote(trxHash string, msg string) bool {
+func PostNote(trxHash string, msg string, nsec string) bool {
 
 	relayList := []string{"wss://nostr.zebedee.cloud", "wss://nostr-pub.wellorder.net", "wss://relay.damus.io"}
 
-	nsec := "<>"
 	ev := nostr.Event{}
 
 	var sk string
