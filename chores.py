@@ -16,7 +16,7 @@ def get_raw_trx(trx_hash, blk_hash):
 	trx = json.loads(shell_execute("bitcoin-cli getrawtransaction {} true {}".format(trx_hash, blk_hash)))
 	return trx
 
-def run(block_hash):
+def run(block_hash, nostr_helper):
 	block = get_block(block_hash)
 	trxs = block.get('tx')[1:]
 	print(len(trxs), block_hash)
@@ -27,7 +27,7 @@ def run(block_hash):
 			if 'OP_RETURN' in asm:
 				try:
 					msg = bytes.fromhex(asm.replace("OP_RETURN ", "")).decode("utf-8")
-					a = shell_execute("./main {} \"{}\"".format(trx, msg))
+					a = shell_execute("{} {} \"{}\"".format(nostr_helper,trx, msg))
 					print(a)
 				except Exception as e:
 					# print(e)
