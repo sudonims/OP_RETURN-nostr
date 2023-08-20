@@ -2,6 +2,4 @@
 
 #Todo
 
-*AWS deploy
-*nostr key mgmt
 *advertise --- hehe
