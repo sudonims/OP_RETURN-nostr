@@ -1,0 +1,16 @@
+[Unit]
+Description=My test service
+After=multi-user.target
+
+[Service]
+Type=idle
+ExecStart=python3 <Path to python file> <Path to nostrhelper go mod> <NSEC>
+Restart=on-failure
+#StartLimitBurst=2
+#StartLimitInterval=30
+User=<User to run on>
+#RestartSec=always
+#TimeoutStartSec = infinity
+
+[Install]
+WantedBy=multi-user.target
